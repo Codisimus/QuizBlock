@@ -1,0 +1,10 @@
+name: QuizBlock
+main: QuizBlock.QuizBlock
+version: 0.5.1
+author: Codisimus
+website: www.codisimus.com
+description: Door opens when correct block is broken
+commands:
+  quizblock:
+    alias: qb
+    description: Main command, type for additional help/commands
