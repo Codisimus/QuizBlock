@@ -22,7 +22,7 @@ public class QuizBlockBlockListener extends BlockListener {
             LinkedList<Quiz> quizes = SaveSystem.getQuizes();
             for (Quiz quiz : quizes) {
                 LinkedList<Block> doorBlocks = quiz.doorBlocks;
-                for (Block doorBlock : doorBlocks) {
+                for (Block doorBlock : doorBlocks)
                     if (Quiz.isDoor(doorBlock.getType()))
                         if (doorBlock.getLocation().equals(block.getLocation()) || areNeighbors(doorBlock, block)) {
                             Door door = (Door)doorBlock.getState().getData();
@@ -30,7 +30,6 @@ public class QuizBlockBlockListener extends BlockListener {
                             if (!door.isOpen())
                                 event.setNewCurrent(event.getOldCurrent());
                         }
-                }
             }
         }
     }
@@ -40,7 +39,7 @@ public class QuizBlockBlockListener extends BlockListener {
         Block blockBroke = event.getBlock();
         Player player = event.getPlayer();
         LinkedList<Quiz> quizes = SaveSystem.getQuizes();
-        for (Quiz quiz : quizes) {
+        for (Quiz quiz : quizes)
             if (quiz.rightBlocks.contains(blockBroke)) {
                 player.sendMessage(quiz.right);
                 event.setCancelled(true);
@@ -53,7 +52,6 @@ public class QuizBlockBlockListener extends BlockListener {
                 player.teleport(quiz.sendTo);
                 event.setCancelled(true);
             }
-        }
     }
 
     /**

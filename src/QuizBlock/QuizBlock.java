@@ -1,7 +1,6 @@
 
 package QuizBlock;
 
-import com.nijiko.permissions.PermissionHandler;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -21,13 +20,14 @@ import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import ru.tehkode.permissions.PermissionManager;
 
 /**
  *
  * @author Codisimus
  */
 public class QuizBlock extends JavaPlugin {
-    protected static PermissionHandler permissions;
+    protected static PermissionManager permissions;
     protected static PluginManager pm;
     protected static Server server;
     protected static int timeOut;
@@ -43,15 +43,11 @@ public class QuizBlock extends JavaPlugin {
     @Override
     public void onEnable () {
         server = getServer();
+        pm = getServer().getPluginManager();
         checkFiles();
         loadConfig();
         SaveSystem.loadFromFile();
-        QuizBlockBlockListener quizBlockBlockListener = new QuizBlockBlockListener();
-        pm = getServer().getPluginManager();
-        pm.registerEvent(Event.Type.PLUGIN_ENABLE, new PluginListener(), Priority.Monitor, this);
-        pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, new QuizBlockPlayerListener(), Priority.Normal, this);
-        pm.registerEvent(Type.REDSTONE_CHANGE, quizBlockBlockListener, Priority.Normal, this);
-        pm.registerEvent(Type.BLOCK_BREAK, quizBlockBlockListener, Priority.Normal, this);
+        registerEvents();
         System.out.println("QuizBlock "+this.getDescription().getVersion()+" is enabled!");
     }
     
@@ -61,9 +57,8 @@ public class QuizBlock extends JavaPlugin {
      */
     private void checkFiles() {
         File file = new File("plugins/QuizBlock/config.properties");
-        if (!file.exists()) {
+        if (!file.exists())
             moveFile("config.properties");
-        }
     }
     
     /**
@@ -118,8 +113,10 @@ public class QuizBlock extends JavaPlugin {
     }
 
     /**
-     * Prints error for missing values
-     * 
+     * Loads the given key and prints error if the key is missing
+     *
+     * @param key The key to be loaded
+     * @return The String value of the loaded key
      */
     private String loadValue(String key) {
         if (!p.containsKey(key)) {
@@ -127,6 +124,19 @@ public class QuizBlock extends JavaPlugin {
             System.err.println("[QuizBlock] Please regenerate config file");
         }
         return p.getProperty(key);
+    }
+    
+    /**
+     * Registers events for the QuizBlock Plugin
+     *
+     */
+    private void registerEvents() {
+        QuizBlockBlockListener blockListener = new QuizBlockBlockListener();
+        pm.registerEvent(Event.Type.PLUGIN_ENABLE, new PluginListener(), Priority.Monitor, this);
+        pm.registerEvent(Type.WORLD_LOAD, new QuizBlockWorldListener(), Priority.Normal, this);
+        pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, new QuizBlockPlayerListener(), Priority.Normal, this);
+        pm.registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
+        pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
     }
 
     /**
@@ -139,11 +149,9 @@ public class QuizBlock extends JavaPlugin {
     protected static boolean hasPermission(Player player, String type) {
         if (permissions != null)
             return permissions.has(player, "quizblock."+type);
-        else
-            if (type.equals("use"))
-                return true;
-            else
-                return player.isOp();
+        else if (type.equals("use"))
+            return true;
+        return player.isOp();
     }
 
     /**

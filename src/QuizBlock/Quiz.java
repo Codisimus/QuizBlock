@@ -26,27 +26,6 @@ public class Quiz {
     protected String wrong = QuizBlock.wrong;
 
     /**
-     * Creates a Quiz from the save file.
-     * 
-     * @param name The name of the Quiz
-     * @param doorBlocks All doorBlocks that are linked with the Quiz
-     * @param rightBlocks All rightBlocks that are linked with the Quiz
-     * @param sendTo The Location the Quiz sends the Player to
-     * @param wrongBlocks All wrongBlocks that are linked with the Quiz
-     * @return The newly created Quiz
-     */
-    public Quiz (String name, LinkedList<Block> doorBlocks, LinkedList<Block> rightBlocks,
-            Location sendTo, LinkedList<Block> wrongBlocks, String right, String wrong) {
-        this.name = name;
-        this.doorBlocks = doorBlocks;
-        this.rightBlocks = rightBlocks;
-        this.sendTo = sendTo;
-        this.wrongBlocks = wrongBlocks;
-        this.right = right;
-        this.wrong = wrong;
-    }
-
-    /**
      * Constructs a new Quiz with the given name and Location
      * 
      * @param name The name of the Quiz
@@ -64,7 +43,7 @@ public class Quiz {
      * If the block is a door then it is swung open
      */
     public void open() {
-        for (final Block block : doorBlocks) {
+        for (final Block block : doorBlocks)
             //Check for door material
             if (isDoor(block.getType())) {
                 //Starts a new thread
@@ -122,7 +101,6 @@ public class Quiz {
                 };
                 thread.start();
             }
-        }
     }
     
     /**
