@@ -1,10 +1,18 @@
 name: QuizBlock
-main: QuizBlock.QuizBlock
+main: com.codisimus.plugins.quizblock.QuizBlock
 version: 0.6.0
 author: Codisimus
 website: www.codisimus.com
 description: Door opens when correct block is broken
+startup: postworld
 commands:
-  quizblock:
-    alias: qb
-    description: Main command, type for additional help/commands
+  quiz:
+    description: Used to setup and manage Quizes
+    usage: /<command> help
+permissions:
+  quizblock.use:
+    default: true
+    description: Needed to use a Quiz
+  quizblock.make:
+    default: op
+    description: Needed to make a Quiz

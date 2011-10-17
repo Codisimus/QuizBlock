@@ -7,7 +7,7 @@
 <!-- the Compile on Save feature is turned off for the project. -->
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
-<project name="Turnstile" default="default" basedir=".">
+<project name="QuizBlock" default="default" basedir=".">
     <description>Builds, tests, and runs the project Hatch.</description>
     <import file="nbproject/build-impl.xml"/>
     <!--
@@ -72,7 +72,7 @@
 
     -->
     <target name="-post-jar">
-        <copy failonerror="false" file="${dist.jar}" todir="C:\Users\Cody\Dropbox"/>
+        <copy failonerror="false" file="${dist.jar}" todir="C:\Users\Cody\Dropbox\Public\Plugins\Dev Builds"/>
 
         <delete dir="${build.dir}"/>
     </target>
