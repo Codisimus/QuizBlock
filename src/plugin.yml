@@ -1,6 +1,6 @@
 name: QuizBlock
 main: com.codisimus.plugins.quizblock.QuizBlock
-version: 0.6.0
+version: 0.6.0 dev
 author: Codisimus
 website: www.codisimus.com
 description: Door opens when correct block is broken
