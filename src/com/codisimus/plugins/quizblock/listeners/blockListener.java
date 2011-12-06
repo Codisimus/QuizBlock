@@ -4,6 +4,7 @@ import com.codisimus.plugins.quizblock.Quiz;
 import com.codisimus.plugins.quizblock.QuizBlock;
 import com.codisimus.plugins.quizblock.SaveSystem;
 import java.util.LinkedList;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -27,20 +28,26 @@ public class blockListener extends BlockListener {
     public void onBlockRedstoneChange(BlockRedstoneEvent event) {
         //Return if the Block is not a Door
         Block block = event.getBlock();
-        if (!Quiz.isDoor(block.getType()))
-            return;
+        Material material = block.getType();
+        switch (material) {
+            case WOOD_DOOR: break;
+            case WOODEN_DOOR: break;
+            case IRON_DOOR: break;
+            case IRON_DOOR_BLOCK: break;
+            default: return;
+        }
         
         for (Quiz quiz: SaveSystem.quizes) {
             LinkedList<Block> doorBlocks = quiz.doorBlocks;
             for (Block doorBlock: doorBlocks)
-                if (Quiz.isDoor(doorBlock.getType()))
-                    if (doorBlock.equals(block) || areNeighbors(doorBlock, block)) {
+                if (doorBlock.getType().equals(material))
+                    if (doorBlock.equals(block)) {
                         Door door = (Door)doorBlock.getState().getData();
-                        
+
                         //Allow redstone to close a door but not open it
                         if (!door.isOpen())
                             event.setNewCurrent(event.getOldCurrent());
-                        
+
                         return;
                     }
         }

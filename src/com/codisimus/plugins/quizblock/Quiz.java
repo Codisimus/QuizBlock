@@ -2,9 +2,9 @@ package com.codisimus.plugins.quizblock;
 
 import java.util.LinkedList;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.material.Door;
 
 /**
@@ -42,85 +42,67 @@ public class Quiz {
      * If the block is a door then it is swung open
      */
     public void open() {
-        for (final Block block: doorBlocks)
-            //Check for door material
-            if (isDoor(block.getType())) {
-                //Start a new thread
-                Thread thread = new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            Door door = (Door)block.getState().getData();
-                            Block neighbor;
-                            if (door.isTopHalf())
-                                neighbor = block.getRelative(BlockFace.DOWN);
-                            else
-                                neighbor = block.getRelative(BlockFace.UP);
-                            
-                            //Swing door open
-                            if (!door.isOpen()) {
-                                block.setData((byte)(block.getState().getData().getData()^4));
-                                neighbor.setData((byte)(neighbor.getState().getData().getData()^4));
-                            }
-                            
+        //Start a new thread
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                for (final Block block: doorBlocks)
+                    //Check for door material
+                    switch (block.getType()) {
+                        case WOOD_DOOR: //Fall through
+                        case WOODEN_DOOR: //Fall through
+                        case IRON_DOOR: //Fall through
+                        case IRON_DOOR_BLOCK:
+                            //Convert the Block to a Door
+                            BlockState state = block.getState();
+                            Door door = (Door)state.getData();
+
+                            //Get the other half of the Door
+                            BlockState stateTopHalf = block.getRelative(BlockFace.UP).getState();
+                            Door doorTopHalf = (Door)state.getData();
+
+                            //Open the Door
+                            door.setOpen(true);
+                            doorTopHalf.setOpen(true);
+                            state.update();
+                            stateTopHalf.update();
+
                             //Sleep for predetermined amount of time
-                            Thread.currentThread().sleep(QuizBlock.timeOut);
-                            
-                            //Swing door shut
-                            door = (Door)block.getState().getData();
-                            if (door.isOpen()) {
-                                block.setData((byte)(block.getState().getData().getData()^4));
-                                neighbor.setData((byte)(neighbor.getState().getData().getData()^4));
+                            try {
+                                Thread.currentThread().sleep(QuizBlock.timeOut);
                             }
-                        }
-                        catch (Exception e) {
-                        }
-                    }
-                };
-                thread.start();
-            }
-            else {
-                //Start a new thread
-                Thread thread = new Thread() {
-                    @Override
-                    public void run() {
-                        try {
+                            catch (Exception e) {
+                            }
+
+                            //Close the Door
+                            door.setOpen(false);
+                            doorTopHalf.setOpen(false);
+                            state.update();
+                            stateTopHalf.update();
+                    
+                            break;
+
+                        default:
                             int type = block.getTypeId();
                             byte data = block.getData();
-                            
-                            //Changes material to AIR
+
+                            //Change material to AIR
                             block.setTypeId(0);
-                            
+
                             //Sleep for given amount of time
-                            Thread.currentThread().sleep(QuizBlock.timeOut);
-                            
-                            //Changes material back
-                            if (type == 35)
-                                block.setTypeIdAndData(type, data, true);
-                            else
-                                block.setTypeId(type);
-                        }
-                        catch (Exception e) {
-                        }
+                            try {
+                                Thread.currentThread().sleep(QuizBlock.timeOut);
+                            }
+                            catch (Exception e) {
+                            }
+
+                            //Change material back
+                            block.setTypeIdAndData(type, data, true);
+                    
+                            break;
                     }
-                };
-                thread.start();
             }
-    }
-    
-    /**
-     * Checks if the given Material is a Door
-     * 
-     * @param target The Material to be checked
-     * @return true if the Material is a Door
-     */
-    public static boolean isDoor(Material door) {
-        switch (door) {
-            case WOOD_DOOR: return true;
-            case WOODEN_DOOR: return true;
-            case IRON_DOOR: return true;
-            case IRON_DOOR_BLOCK: return true;
-            default: return false;
-        }
+        };
+        thread.start();
     }
 }

@@ -3,11 +3,15 @@ package com.codisimus.plugins.quizblock.listeners;
 import com.codisimus.plugins.quizblock.Quiz;
 import com.codisimus.plugins.quizblock.QuizBlock;
 import com.codisimus.plugins.quizblock.SaveSystem;
+import com.google.common.collect.Sets;
+import java.util.HashSet;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.material.Door;
 
 /**
  * Executes Player Commands
@@ -17,6 +21,8 @@ import org.bukkit.entity.Player;
 public class commandListener implements CommandExecutor {
     public static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, LIST, RL }
     public static enum BlockType { RIGHT, DOOR, WRONG }
+    public static final HashSet TRANSPARENT = Sets.newHashSet(
+            (byte)8, (byte)9, (byte)10, (byte)11, (byte)51);
     
     /**
      * Listens for QuizBlock commands to execute them
@@ -39,8 +45,18 @@ public class commandListener implements CommandExecutor {
         
         Player player = (Player)sender;
 
-        //Display help page if the Player did not add any arguments
+        //Display the help page if the Player did not add any arguments
         if (args.length == 0) {
+            sendHelp(player);
+            return true;
+        }
+        
+        Action action;
+        
+        try {
+            action = Action.valueOf(args[0].toUpperCase());
+        }
+        catch (Exception notEnum) {
             sendHelp(player);
             return true;
         }
@@ -52,7 +68,7 @@ public class commandListener implements CommandExecutor {
         }
         
         //Execute the correct command
-        switch (Action.valueOf(args[0])) {
+        switch (action) {
             case HELP:
                 sendHelp(player);
                 return true;
@@ -66,8 +82,19 @@ public class commandListener implements CommandExecutor {
                 return true;
                 
             case LINK:
-                if (args.length == 3)
-                    link(player, args[2], BlockType.valueOf(args[1]));
+                if (args.length == 3) {
+                    BlockType blockType;
+        
+                    try {
+                        blockType = BlockType.valueOf(args[1].toUpperCase());
+                    }
+                    catch (Exception notEnum) {
+                        sendHelp(player);
+                        return true;
+                    }
+                    
+                    link(player, args[2], blockType);
+                }
                 else
                     sendHelp(player);
                 
@@ -98,7 +125,17 @@ public class commandListener implements CommandExecutor {
                 for (int i = 2; i < args.length; i++)
                     msg = msg.concat(args[i].concat(" "));
                 
-                msg(player, args[2], BlockType.valueOf(args[1]), msg);
+                BlockType blockType;
+        
+                try {
+                    blockType = BlockType.valueOf(args[1].toUpperCase());
+                }
+                catch (Exception notEnum) {
+                    sendHelp(player);
+                    return true;
+                }
+                    
+                msg(player, args[2], blockType, msg);
                 return true;
                 
             case LIST:
@@ -171,6 +208,19 @@ public class commandListener implements CommandExecutor {
                 break;
                 
             case DOOR:
+                switch (block.getType()) {
+                    case WOOD_DOOR: //Fall through
+                    case WOODEN_DOOR: //Fall through
+                    case IRON_DOOR: //Fall through
+                    case IRON_DOOR_BLOCK:
+                        if (((Door)block.getState().getData()).isTopHalf())
+                            block = block.getRelative(BlockFace.DOWN);
+
+                        break;
+
+                    default: break;
+                }
+                
                 quiz.doorBlocks.add(block);
                 player.sendMessage("Succesfully linked as door block of "+name+"!");
                 break;

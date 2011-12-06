@@ -14,9 +14,7 @@ import java.io.OutputStream;
 import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
-import org.bukkit.Material;
 import org.bukkit.Server;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
@@ -133,7 +131,7 @@ public class QuizBlock extends JavaPlugin {
      * @return The String value of the loaded key
      */
     public String loadValue(String key) {
-        //Print an error if key is not found
+        //Print an error if the key is not found
         if (!p.containsKey(key)) {
             System.err.println("[QuizBlock] Missing value for "+key+" in config file");
             System.err.println("[QuizBlock] Please regenerate config file");
@@ -148,8 +146,8 @@ public class QuizBlock extends JavaPlugin {
      */
     public void registerEvents() {
         blockListener blockListener = new blockListener();
-        pm.registerEvent(Event.Type.PLUGIN_ENABLE, new pluginListener(), Priority.Monitor, this);
-        pm.registerEvent(Type.WORLD_LOAD, new worldListener(), Priority.Normal, this);
+        pm.registerEvent(Type.PLUGIN_ENABLE, new pluginListener(), Priority.Monitor, this);
+        pm.registerEvent(Type.WORLD_LOAD, new worldListener(), Priority.Monitor, this);
         pm.registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
     }
@@ -168,22 +166,6 @@ public class QuizBlock extends JavaPlugin {
         
         //Return Bukkit Permission value
         return player.hasPermission("quizblock."+type);
-    }
-
-    /**
-     * Returns boolean value of whether the given Block is a door
-     * 
-     * @param door The given Block
-     * @return true if the given Block is a door
-     */
-    public static boolean isDoor(Block door) {
-        switch (door.getType()) {
-            case IRON_DOOR: return true;
-            case IRON_DOOR_BLOCK: return true;
-            case WOODEN_DOOR: return true;
-            case WOOD_DOOR: return true;
-            default: return false;
-        }
     }
     
     /**
