@@ -373,13 +373,13 @@ public class commandListener implements CommandExecutor {
     public static void sendHelp(Player player) {
         player.sendMessage("§e     QuizBlock Help Page:");
         player.sendMessage("§2/quiz make [Name]§b Makes Quiz at target location");
-        player.sendMessage("§2/quiz link right [Name]§b Links target block with Quiz");
-        player.sendMessage("§2/quiz link door [Name]§b Links target block with Quiz");
-        player.sendMessage("§2/quiz link wrong [Name]§b Links target block with Quiz");
+        player.sendMessage("§2/quiz link right [Name]§b Links target Block with Quiz");
+        player.sendMessage("§2/quiz link door [Name]§b Links target Block with Quiz");
+        player.sendMessage("§2/quiz link wrong [Name]§b Links target Block with Quiz");
         player.sendMessage("§2/quiz msg right [Name] [msg]§b Sets right msg for Quiz");
         player.sendMessage("§2/quiz msg wrong [Name] [msg]§b Sets wrong msg for Quiz");
-        player.sendMessage("§2/quiz unlink§b Unlinks target block from Quiz");
-        player.sendMessage("§2/quiz delete (Name)§b Deletes Quiz and unlinks blocks");
+        player.sendMessage("§2/quiz unlink§b Unlinks target Block from Quiz");
+        player.sendMessage("§2/quiz delete (Name)§b Deletes Quiz and unlinks Block");
         player.sendMessage("§2/quiz list§b Lists all Quizes");
         player.sendMessage("§2/quiz rl§b Reloads QuizBlock plugin");
     }
