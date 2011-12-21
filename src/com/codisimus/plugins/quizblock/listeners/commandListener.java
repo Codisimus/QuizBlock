@@ -2,7 +2,6 @@ package com.codisimus.plugins.quizblock.listeners;
 
 import com.codisimus.plugins.quizblock.Quiz;
 import com.codisimus.plugins.quizblock.QuizBlock;
-import com.codisimus.plugins.quizblock.SaveSystem;
 import com.google.common.collect.Sets;
 import java.util.HashSet;
 import org.bukkit.block.Block;
@@ -18,10 +17,10 @@ import org.bukkit.material.Door;
  * 
  * @author Codisimus
  */
-public class commandListener implements CommandExecutor {
-    public static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, LIST, RL }
-    public static enum BlockType { RIGHT, DOOR, WRONG }
-    public static final HashSet TRANSPARENT = Sets.newHashSet(
+public class CommandListener implements CommandExecutor {
+    private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, LIST, RL }
+    private static enum BlockType { RIGHT, DOOR, WRONG }
+    private static final HashSet TRANSPARENT = Sets.newHashSet(
             (byte)8, (byte)9, (byte)10, (byte)11, (byte)51);
     
     /**
@@ -164,16 +163,16 @@ public class commandListener implements CommandExecutor {
      * @param player The Player creating the Quiz
      * @param name The name of the Quiz being created (must not already exist)
      */
-    public static void make(Player player, String name) {
+    private static void make(Player player, String name) {
         //Cancel if the Quiz already exists
-        if (SaveSystem.findQuiz(name) != null) {
+        if (QuizBlock.findQuiz(name) != null) {
             player.sendMessage("A Quiz named "+name+" already exists.");
             return;
         }
         
-        SaveSystem.quizes.add(new Quiz(name, player.getLocation()));
+        QuizBlock.quizes.add(new Quiz(name, player.getLocation()));
         player.sendMessage("Quiz "+name+" made!");
-        SaveSystem.save();
+        QuizBlock.save();
     }
     
     /**
@@ -183,18 +182,18 @@ public class commandListener implements CommandExecutor {
      * @param name The name of the Quiz the Block will be linked to
      * @param type The BlockType that the Block will be linked as
      */
-    public static void link(Player player, String name, BlockType type) {
-        Block block = player.getTargetBlock(null, 10);
+    private static void link(Player player, String name, BlockType type) {
+        Block block = player.getTargetBlock(TRANSPARENT, 10);
         
         //Cancel if the Block is already linked to a Quiz
-        Quiz quiz = SaveSystem.findQuiz(block);
+        Quiz quiz = QuizBlock.findQuiz(block);
         if (quiz != null) {
             player.sendMessage("That Block is already linked to Quiz "+quiz.name+".");
             return;
         }
         
         //Cancel if the Quiz with the given name does not exist
-        quiz = SaveSystem.findQuiz(name);
+        quiz = QuizBlock.findQuiz(name);
         if (quiz != null) {
             player.sendMessage("Quiz "+name+" does not exsist.");
             return;
@@ -233,7 +232,7 @@ public class commandListener implements CommandExecutor {
             default: sendHelp(player); return;
         }
         
-        SaveSystem.save();
+        QuizBlock.save();
     }
     
     /**
@@ -241,10 +240,10 @@ public class commandListener implements CommandExecutor {
      * 
      * @param player The Player unlinking the Block they are targeting
      */
-    public static void unlink(Player player) {
+    private static void unlink(Player player) {
         //Cancel if the Block the Player is targeting is not linked to a Quiz
-        Block block = player.getTargetBlock(null, 10);
-        Quiz quiz = SaveSystem.findQuiz(block);
+        Block block = player.getTargetBlock(TRANSPARENT, 10);
+        Quiz quiz = QuizBlock.findQuiz(block);
         if (quiz == null) {
             player.sendMessage("Target Block is not linked to a Quiz");
             return;
@@ -255,7 +254,7 @@ public class commandListener implements CommandExecutor {
                 quiz.wrongBlocks.remove(block);
         
         player.sendMessage("Target Block has been unlinked from Quiz "+quiz.name+"!");
-        SaveSystem.save();
+        QuizBlock.save();
     }
     
     /**
@@ -265,12 +264,12 @@ public class commandListener implements CommandExecutor {
      * @param player The Player deleting the Quiz
      * @param name The name of the Quiz to be deleted
      */
-    public static void delete(Player player, String name) {
+    private static void delete(Player player, String name) {
         Quiz quiz = null;
         
         if (name == null) {
             //Find the Warp that will be modified using the target Block
-            quiz = SaveSystem.findQuiz(player.getTargetBlock(null, 10));
+            quiz = QuizBlock.findQuiz(player.getTargetBlock(TRANSPARENT, 10));
             
             //Cancel if the Warp does not exist
             if (quiz == null ) {
@@ -280,7 +279,7 @@ public class commandListener implements CommandExecutor {
         }
         else {
             //Find the Warp that will be modified using the given name
-            quiz = SaveSystem.findQuiz(name);
+            quiz = QuizBlock.findQuiz(name);
             
             //Cancel if the Warp does not exist
             if (quiz == null ) {
@@ -292,10 +291,10 @@ public class commandListener implements CommandExecutor {
         quiz.doorBlocks.clear();
         quiz.rightBlocks.clear();
         quiz.wrongBlocks.clear();
-        SaveSystem.quizes.remove(quiz);
+        QuizBlock.quizes.remove(quiz);
         
         player.sendMessage("Quiz "+name+" deleted.");
-        SaveSystem.save();
+        QuizBlock.save();
     }
     
     /**
@@ -307,9 +306,9 @@ public class commandListener implements CommandExecutor {
      * @param type The BlockType that the message will be linked to
      * @param msg The new message
      */
-    public static void msg(Player player, String name, BlockType type, String msg) {
+    private static void msg(Player player, String name, BlockType type, String msg) {
         //Cancel if the Quiz with the given name does not exist
-        Quiz quiz = SaveSystem.findQuiz(name);
+        Quiz quiz = QuizBlock.findQuiz(name);
         if (quiz != null) {
             player.sendMessage("Quiz "+name+" does not exsist.");
             return;
@@ -330,7 +329,7 @@ public class commandListener implements CommandExecutor {
             default: sendHelp(player); return;
         }
         
-        SaveSystem.save();
+        QuizBlock.save();
     }
     
     /**
@@ -338,11 +337,11 @@ public class commandListener implements CommandExecutor {
      * 
      * @param player The Player requesting the list
      */
-    public static void list(Player player) {
+    private static void list(Player player) {
         String quizList = "Current Quizes:  ";
         
         //Concat the name of each Quiz
-        for (Quiz tempQuiz: SaveSystem.quizes)
+        for (Quiz tempQuiz: QuizBlock.quizes)
             quizList = quizList.concat(tempQuiz.name+", ");
         
         player.sendMessage(quizList.substring(0, quizList.length() - 2));
@@ -353,10 +352,10 @@ public class commandListener implements CommandExecutor {
      * 
      * @param player The Player reloading the data 
      */
-    public static void rl(Player player) {
-        SaveSystem.quizes.clear();
-        SaveSystem.save = true;
-        SaveSystem.load();
+    private static void rl(Player player) {
+        QuizBlock.quizes.clear();
+        QuizBlock.save = true;
+        QuizBlock.loadData();
         QuizBlock.pm = QuizBlock.server.getPluginManager();
         
         System.out.println("[QuizBlock] reloaded");
@@ -370,7 +369,7 @@ public class commandListener implements CommandExecutor {
      *
      * @param player The Player needing help
      */
-    public static void sendHelp(Player player) {
+    private static void sendHelp(Player player) {
         player.sendMessage("§e     QuizBlock Help Page:");
         player.sendMessage("§2/quiz make [Name]§b Makes Quiz at target location");
         player.sendMessage("§2/quiz link right [Name]§b Links target Block with Quiz");

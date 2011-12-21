@@ -2,7 +2,6 @@ package com.codisimus.plugins.quizblock.listeners;
 
 import com.codisimus.plugins.quizblock.Quiz;
 import com.codisimus.plugins.quizblock.QuizBlock;
-import com.codisimus.plugins.quizblock.SaveSystem;
 import java.util.LinkedList;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -17,7 +16,7 @@ import org.bukkit.material.Door;
  *
  * @author Codisimus
  */
-public class blockListener extends BlockListener {
+public class BlockEventListener extends BlockListener {
 
     /**
      * Blocks Players from opening linked doors with redstone
@@ -37,7 +36,7 @@ public class blockListener extends BlockListener {
             default: return;
         }
         
-        for (Quiz quiz: SaveSystem.quizes) {
+        for (Quiz quiz: QuizBlock.quizes) {
             LinkedList<Block> doorBlocks = quiz.doorBlocks;
             for (Block doorBlock: doorBlocks)
                 if (doorBlock.getType().equals(material))
@@ -63,7 +62,7 @@ public class blockListener extends BlockListener {
         Block blockBroke = event.getBlock();
         Player player = event.getPlayer();
         
-        for (Quiz quiz: SaveSystem.quizes)
+        for (Quiz quiz: QuizBlock.quizes)
             if (quiz.rightBlocks.contains(blockBroke)) {
                 //Return if the Player does not have permission to use Quizes
                 if (QuizBlock.hasPermission(player, "use")) {

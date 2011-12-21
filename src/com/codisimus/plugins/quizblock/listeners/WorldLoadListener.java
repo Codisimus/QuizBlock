@@ -1,6 +1,6 @@
 package com.codisimus.plugins.quizblock.listeners;
 
-import com.codisimus.plugins.quizblock.SaveSystem;
+import com.codisimus.plugins.quizblock.QuizBlock;
 import org.bukkit.event.world.WorldListener;
 import org.bukkit.event.world.WorldLoadEvent;
 
@@ -9,7 +9,7 @@ import org.bukkit.event.world.WorldLoadEvent;
  *
  * @author Codisimus
  */
-public class worldListener extends WorldListener {
+public class WorldLoadListener extends WorldListener {
 
     /**
      * Loads data for the loaded World
@@ -18,7 +18,7 @@ public class worldListener extends WorldListener {
      */
     @Override
     public void onWorldLoad (WorldLoadEvent event) {
-        SaveSystem.load(event.getWorld());
+        QuizBlock.loadData(event.getWorld());
     }
 }
 
