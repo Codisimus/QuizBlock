@@ -1,6 +1,6 @@
 name: QuizBlock
 main: com.codisimus.plugins.quizblock.QuizBlock
-version: 0.8.0
+version: 0.8.1
 author: Codisimus
 website: www.codisimus.com
 description: Door opens when correct block is broken
@@ -15,4 +15,22 @@ permissions:
     description: Needed to use a Quiz
   quizblock.make:
     default: op
-    description: Needed to make a Quiz
+    description: Needed to make a Quiz (/quiz make)
+  quizblock.link:
+    default: op
+    description: Needed to link a Block to a Quiz (/quiz link)
+  quizblock.unlink:
+    default: op
+    description: Needed to unlink a Block to a Quiz (/quiz unlink)
+  quizblock.delete:
+    default: op
+    description: Needed to delete a Quiz (/quiz delete)
+  quizblock.msg:
+    default: op
+    description: Needed to set a msg for a Quiz (/quiz msg)
+  quizblock.list:
+    default: op
+    description: Needed to list all Quizes (/quiz list)
+  quizblock.rl:
+    default: op
+    description: Needed to reload the Plugin (/quiz rl)

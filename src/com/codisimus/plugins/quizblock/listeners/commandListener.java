@@ -194,7 +194,7 @@ public class CommandListener implements CommandExecutor {
         
         //Cancel if the Quiz with the given name does not exist
         quiz = QuizBlock.findQuiz(name);
-        if (quiz != null) {
+        if (quiz == null) {
             player.sendMessage("Quiz "+name+" does not exsist.");
             return;
         }
@@ -309,7 +309,7 @@ public class CommandListener implements CommandExecutor {
     private static void msg(Player player, String name, BlockType type, String msg) {
         //Cancel if the Quiz with the given name does not exist
         Quiz quiz = QuizBlock.findQuiz(name);
-        if (quiz != null) {
+        if (quiz == null) {
             player.sendMessage("Quiz "+name+" does not exsist.");
             return;
         }
