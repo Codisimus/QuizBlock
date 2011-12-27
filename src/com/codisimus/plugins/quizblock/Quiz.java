@@ -42,11 +42,11 @@ public class Quiz {
      * If the block is a door then it is swung open
      */
     public void open() {
-        //Start a new thread
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                for (final Block block: doorBlocks)
+        for (final Block block: doorBlocks) {
+            //Start a new thread
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
                     //Check for door material
                     switch (block.getType()) {
                         case WOOD_DOOR: //Fall through
@@ -101,8 +101,9 @@ public class Quiz {
                     
                             break;
                     }
-            }
-        };
-        thread.start();
+                }
+            };
+            thread.start();
+        }
     }
 }

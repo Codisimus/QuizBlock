@@ -21,7 +21,7 @@ public class CommandListener implements CommandExecutor {
     private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, LIST, RL }
     private static enum BlockType { RIGHT, DOOR, WRONG }
     private static final HashSet TRANSPARENT = Sets.newHashSet(
-            (byte)8, (byte)9, (byte)10, (byte)11, (byte)51);
+            (byte)0, (byte)8, (byte)9, (byte)10, (byte)11, (byte)51);
     
     /**
      * Listens for QuizBlock commands to execute them
@@ -188,7 +188,7 @@ public class CommandListener implements CommandExecutor {
         //Cancel if the Block is already linked to a Quiz
         Quiz quiz = QuizBlock.findQuiz(block);
         if (quiz != null) {
-            player.sendMessage("That Block is already linked to Quiz "+quiz.name+".");
+            player.sendMessage("That "+block.getType().name()+" is already linked to Quiz "+quiz.name+".");
             return;
         }
         
@@ -203,7 +203,7 @@ public class CommandListener implements CommandExecutor {
         switch (type) {
             case RIGHT:
                 quiz.rightBlocks.add(block);
-                player.sendMessage("Succesfully linked as right block of "+name+"!");
+                player.sendMessage("Succesfully linked "+block.getType().name()+" as right block of "+name+"!");
                 break;
                 
             case DOOR:
@@ -221,12 +221,12 @@ public class CommandListener implements CommandExecutor {
                 }
                 
                 quiz.doorBlocks.add(block);
-                player.sendMessage("Succesfully linked as door block of "+name+"!");
+                player.sendMessage("Succesfully linked "+block.getType().name()+" as door block of "+name+"!");
                 break;
                 
             case WRONG:
                 quiz.wrongBlocks.add(block);
-                player.sendMessage("Succesfully linked as wrong block of "+name+"!");
+                player.sendMessage("Succesfully linked "+block.getType().name()+" as wrong block of "+name+"!");
                 break;
                 
             default: sendHelp(player); return;
@@ -245,7 +245,7 @@ public class CommandListener implements CommandExecutor {
         Block block = player.getTargetBlock(TRANSPARENT, 10);
         Quiz quiz = QuizBlock.findQuiz(block);
         if (quiz == null) {
-            player.sendMessage("Target Block is not linked to a Quiz");
+            player.sendMessage("Target "+block.getType().name()+" is not linked to a Quiz");
             return;
         }
         
@@ -253,7 +253,7 @@ public class CommandListener implements CommandExecutor {
             if (!quiz.rightBlocks.remove(block))
                 quiz.wrongBlocks.remove(block);
         
-        player.sendMessage("Target Block has been unlinked from Quiz "+quiz.name+"!");
+        player.sendMessage("Target "+block.getType().name()+" has been unlinked from Quiz "+quiz.name+"!");
         QuizBlock.save();
     }
     
@@ -269,11 +269,12 @@ public class CommandListener implements CommandExecutor {
         
         if (name == null) {
             //Find the Warp that will be modified using the target Block
-            quiz = QuizBlock.findQuiz(player.getTargetBlock(TRANSPARENT, 10));
+            Block block = player.getTargetBlock(TRANSPARENT, 10);
+            quiz = QuizBlock.findQuiz(block);
             
             //Cancel if the Warp does not exist
             if (quiz == null ) {
-                player.sendMessage("Target Block is not linked to a Quiz");
+                player.sendMessage("Target "+block.getType().name()+" is not linked to a Quiz");
                 return;
             }
         }
@@ -293,7 +294,7 @@ public class CommandListener implements CommandExecutor {
         quiz.wrongBlocks.clear();
         QuizBlock.quizes.remove(quiz);
         
-        player.sendMessage("Quiz "+name+" deleted.");
+        player.sendMessage("Quiz "+quiz.name+" deleted.");
         QuizBlock.save();
     }
     
