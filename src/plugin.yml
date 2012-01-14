@@ -28,6 +28,9 @@ permissions:
   quizblock.msg:
     default: op
     description: Needed to set a msg for a Quiz (/quiz msg)
+  quizblock.command:
+    default: op
+    description: Needed to set a Command for a Quiz (/quiz command)
   quizblock.list:
     default: op
     description: Needed to list all Quizes (/quiz list)

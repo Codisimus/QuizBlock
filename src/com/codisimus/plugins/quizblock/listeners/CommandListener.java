@@ -436,8 +436,8 @@ public class CommandListener implements CommandExecutor {
         player.sendMessage("§2/quiz link wrong [Name]§b Links target Block with Quiz");
         player.sendMessage("§2/quiz msg right [Name] [msg]§b Sets right msg for Quiz");
         player.sendMessage("§2/quiz msg wrong [Name] [msg]§b Sets wrong msg for Quiz");
-        player.sendMessage("§2/quiz cmd right [Name] [cmd]§b Sets right command for Quiz");
-        player.sendMessage("§2/quiz cmd wrong [Name] [cmd]§b Sets wrong command for Quiz");
+        player.sendMessage("§2/quiz command right [Name] [Command]§b Sets right Command for Quiz");
+        player.sendMessage("§2/quiz command wrong [Name] [Command]§b Sets wrong Command for Quiz");
         player.sendMessage("§b*Commands should not include '/'*");
         player.sendMessage("§2/quiz unlink§b Unlinks target Block from Quiz");
         player.sendMessage("§2/quiz delete (Name)§b Deletes Quiz and unlinks Block");
