@@ -1,7 +1,10 @@
 package com.codisimus.plugins.quizblock;
 
+import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
 import java.util.LinkedList;
+import org.bukkit.Effect;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -17,12 +20,15 @@ import org.bukkit.material.Door;
  */
 public class Quiz {
     public String name;
+    public Location sendTo;
     public LinkedList<Block> doorBlocks = new LinkedList<Block>();
     public LinkedList<Block> rightBlocks = new LinkedList<Block>();
-    public Location sendTo;
     public LinkedList<Block> wrongBlocks = new LinkedList<Block>();
-    public String right = QuizBlock.right;
-    public String wrong = QuizBlock.wrong;
+    public String rightMessage = QuizBlock.rightMessage;
+    public String wrongMessage = QuizBlock.wrongMessage;
+    public String rightCommand = QuizBlock.rightCommand;
+    public String wrongCommand = QuizBlock.wrongCommand;
+    public boolean open = false;
 
     /**
      * Constructs a new Quiz with the given name and Location
@@ -42,6 +48,8 @@ public class Quiz {
      * If the block is a door then it is swung open
      */
     public void open() {
+        open = true;
+        
         for (final Block block: doorBlocks) {
             //Start a new thread
             Thread thread = new Thread() {
@@ -66,6 +74,9 @@ public class Quiz {
                             doorTopHalf.setOpen(true);
                             state.update();
                             stateTopHalf.update();
+                            
+                            //Play Door sound
+                            block.getWorld().playEffect(block.getLocation(), Effect.DOOR_TOGGLE, 4);
 
                             //Sleep for predetermined amount of time
                             try {
@@ -79,6 +90,9 @@ public class Quiz {
                             doorTopHalf.setOpen(false);
                             state.update();
                             stateTopHalf.update();
+                            
+                            //Play Door sound
+                            block.getWorld().playEffect(block.getLocation(), Effect.DOOR_TOGGLE, 4);
                     
                             break;
 
@@ -89,11 +103,18 @@ public class Quiz {
                             //Change material to AIR
                             block.setTypeId(0);
 
-                            //Sleep for given amount of time
-                            try {
-                                Thread.currentThread().sleep(QuizBlock.timeOut);
-                            }
-                            catch (Exception e) {
+                            long endTime = System.currentTimeMillis() + QuizBlock.timeOut;
+                            
+                            while (System.currentTimeMillis() < endTime) {
+                                //Play smoke effect
+                                block.getWorld().playEffect(block.getLocation(), Effect.SMOKE, 4);
+                            
+                                //Sleep for 1 second
+                                try {
+                                    Thread.currentThread().sleep(1000);
+                                }
+                                catch (Exception e) {
+                                }
                             }
 
                             //Change material back
@@ -101,9 +122,64 @@ public class Quiz {
                     
                             break;
                     }
+                    
+                    open = false;
                 }
             };
             thread.start();
         }
+    }
+    
+    /**
+     * Creates a LinkedList of Blocks from a String
+     * 
+     * @param type The given type
+     * @param data The Location data of the Blocks
+     */
+    public void setBlocks(BlockType type, String string) {
+        LinkedList<Block> blocks = new LinkedList<Block>();
+        
+        String[] blocksData = string.split(", ");
+        for (String data: blocksData) {
+            String[] location = data.split("'");
+            
+            World world = QuizBlock.server.getWorld(location[0]);
+            if (world != null) {
+                int x = Integer.parseInt(location[1]);
+                int y = Integer.parseInt(location[2]);
+                int z = Integer.parseInt(location[3]);
+                
+                blocks.add(world.getBlockAt(x, y, z));
+            }
+        }
+        
+        switch (type) {
+            case DOOR: doorBlocks = blocks; break;
+            case RIGHT: rightBlocks = blocks; break;
+            case WRONG: wrongBlocks = blocks; break;
+        }
+    }
+    
+    /**
+     * Returns the LinkedList of given Blocks as a String
+     * 
+     * @param type The given type
+     * @return the LinkedList of given Blocks as a String
+     */
+    public String blocksToString(BlockType type) {
+        LinkedList<Block> blocks = null;
+        switch (type) {
+            case DOOR: blocks = doorBlocks; break;
+            case RIGHT: blocks = rightBlocks; break;
+            case WRONG: blocks = wrongBlocks; break;
+        }
+        
+        String string = "";
+        for (Block block: blocks) {
+            string = string.concat(block.getWorld().getName()+"'"+
+                    block.getX()+"'"+block.getY()+"'"+block.getZ()+", ");
+        }
+        
+        return string;
     }
 }

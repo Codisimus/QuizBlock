@@ -17,6 +17,7 @@ import org.bukkit.material.Door;
  * @author Codisimus
  */
 public class BlockEventListener extends BlockListener {
+    public static boolean breakToUse;
 
     /**
      * Blocks Players from opening linked doors with redstone
@@ -58,35 +59,31 @@ public class BlockEventListener extends BlockListener {
      * @param event The BlockBreakEvent that occurred
      */
     @Override
-    public void onBlockBreak (final BlockBreakEvent event) {
-        Block blockBroke = event.getBlock();
+    public void onBlockBreak (BlockBreakEvent event) {
+        Block block = event.getBlock();
         Player player = event.getPlayer();
         
         for (Quiz quiz: QuizBlock.quizes)
-            if (quiz.rightBlocks.contains(blockBroke)) {
-                //Return if the Player does not have permission to use Quizes
-                if (QuizBlock.hasPermission(player, "use")) {
-                    player.sendMessage(quiz.right);
+            if (quiz.rightBlocks.contains(block)) {
+                event.setCancelled(true);
+                
+                //Open if the Player has permission to use Quizes
+                if (breakToUse && QuizBlock.hasPermission(player, "use")) {
+                    player.sendMessage(quiz.rightMessage);
                     quiz.open();
                 }
+            }
+            else if (quiz.wrongBlocks.contains(block)) {
+                event.setCancelled(true);
                 
-                event.setCancelled(true);
-                return;
-            }
-            else if (quiz.doorBlocks.contains(blockBroke)) {
-                event.setCancelled(true);
-                return;
-            }
-            else if (quiz.wrongBlocks.contains(blockBroke)) {
-                //Return if the Player does not have permission to use Quizes
-                if (QuizBlock.hasPermission(player, "use")) {
-                    player.sendMessage(quiz.wrong);
+                //Teleport if the Player has permission to use Quizes
+                if (breakToUse && QuizBlock.hasPermission(player, "use")) {
+                    player.sendMessage(quiz.wrongMessage);
                     player.teleport(quiz.sendTo);
                 }
-                    
-                event.setCancelled(true);
-                return;
             }
+            else if (quiz.doorBlocks.contains(block))
+                event.setCancelled(true);
     }
 
     /**

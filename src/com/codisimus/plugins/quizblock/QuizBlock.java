@@ -1,20 +1,8 @@
 package com.codisimus.plugins.quizblock;
 
-import com.codisimus.plugins.quizblock.listeners.WorldLoadListener;
-import com.codisimus.plugins.quizblock.listeners.BlockEventListener;
-import com.codisimus.plugins.quizblock.listeners.CommandListener;
-import com.codisimus.plugins.quizblock.listeners.PluginListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
+import com.codisimus.plugins.quizblock.listeners.*;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.jar.JarFile;
@@ -41,8 +29,10 @@ public class QuizBlock extends JavaPlugin {
     public static Server server;
     public static int timeOut;
     public static String permission;
-    public static String right;
-    public static String wrong;
+    public static String rightMessage;
+    public static String wrongMessage;
+    public static String rightCommand;
+    public static String wrongCommand;
     private static Properties p;
     public static LinkedList<Quiz> quizes = new LinkedList<Quiz>();
     public static boolean save = true;
@@ -120,9 +110,12 @@ public class QuizBlock extends JavaPlugin {
             
             timeOut = Integer.parseInt(loadValue("AutoCloseTimer")) * 1000;
             PluginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
+            BlockEventListener.breakToUse = Boolean.parseBoolean(loadValue("BreakBlocksToActivate"));
             permission = format(loadValue("PermissionMessage"));
-            right = format(loadValue("DefaultRightMessage"));
-            wrong = format(loadValue("DefaultWrongMessage"));
+            rightMessage = format(loadValue("DefaultRightMessage"));
+            wrongMessage = format(loadValue("DefaultWrongMessage"));
+            rightCommand = format(loadValue("DefaultRightCommand"));
+            wrongCommand = format(loadValue("DefaultWrongCommand"));
         }
         catch (Exception e) {
         }
@@ -154,6 +147,9 @@ public class QuizBlock extends JavaPlugin {
         pm.registerEvent(Type.WORLD_LOAD, new WorldLoadListener(), Priority.Monitor, this);
         pm.registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
+        
+        if (!BlockEventListener.breakToUse)
+            pm.registerEvent(Type.PLAYER_INTERACT, new PlayerEventListener(), Priority.Monitor, this);
     }
 
     /**
@@ -190,9 +186,50 @@ public class QuizBlock extends JavaPlugin {
      */
     public static void loadData() {
         try {
-            new File("plugins/QuizBlock/QuizBlock.save").createNewFile();
+            File[] files = new File("plugins/QuizBlock").listFiles();
+
+            for (File file: files) {
+                String name = file.getName();
+                if (name.endsWith(".dat")) {
+                    p.load(new FileInputStream(file));
+                    
+                    String[] location = p.getProperty("Location").split("'");
+                    
+                    World world = server.getWorld(location[0]);
+                    if (world != null) {
+                        Quiz quiz = new Quiz(name, null);
+                        
+                        double x = Double.parseDouble(location[1]);
+                        double y = Double.parseDouble(location[2]);
+                        double z = Double.parseDouble(location[3]);
+                        float pitch = Float.parseFloat(location[4]);
+                        float yaw = Float.parseFloat(location[5]);
+                        
+                        quiz.sendTo = new Location(world, x, y, z, pitch, yaw);
+                        
+                        quiz.setBlocks(BlockType.DOOR, p.getProperty("DoorBlocks"));
+                        quiz.setBlocks(BlockType.RIGHT, p.getProperty("RightBlocks"));
+                        quiz.setBlocks(BlockType.WRONG, p.getProperty("WrongBlocks"));
+
+                        quiz.rightMessage = p.getProperty("RightMessage");
+                        quiz.wrongMessage = p.getProperty("WrongMessage");
+                        quiz.rightCommand = p.getProperty("RightCommand");
+                        quiz.wrongCommand = p.getProperty("WrongCommand");
+                    }
+                }
+            }
+            
+            if (!quizes.isEmpty())
+                return;
+            
+            File file = new File("plugins/QuizBlock/QuizBlock.save");
+            if (!file.exists())
+                return;
+        
+            System.out.println("[QuizBlock] Loading outdated save file");
+            
             BufferedReader bReader = new BufferedReader(new FileReader("plugins/QuizBlock/QuizBlock.save"));
-            String line = "";
+            String line;
             while ((line = bReader.readLine()) != null) {
                 String[] split = line.split(";");
                 String name = split[0];
@@ -255,12 +292,14 @@ public class QuizBlock extends JavaPlugin {
                 }
                 String right = bReader.readLine();
                 if (right.contains(";"))
-                    quiz.right = QuizBlock.right;
+                    quiz.rightMessage = QuizBlock.rightMessage;
                 String wrong = bReader.readLine();
                 if (wrong.contains(";"))
-                    quiz.wrong = QuizBlock.wrong;
+                    quiz.wrongMessage = QuizBlock.wrongMessage;
                 quizes.add(quiz);
             }
+            
+            save();
         }
         catch (Exception loadFailed) {
             save = false;
@@ -277,7 +316,7 @@ public class QuizBlock extends JavaPlugin {
         try {
             new File("plugins/QuizBlock/QuizBlock.save").createNewFile();
             BufferedReader bReader = new BufferedReader(new FileReader("plugins/QuizBlock/QuizBlock.save"));
-            String line = "";
+            String line;
             while ((line = bReader.readLine()) != null) {
                 String[] split = line.split(";");
                 Quiz quiz = null;
@@ -343,62 +382,27 @@ public class QuizBlock extends JavaPlugin {
      */
     public static void save() {
         //Cancel if saving is turned off
-        if (!save)
+        if (!save) {
+            System.out.println("[QuizBlock] Warning! Data is not being saved.");
             return;
+        }
         
         try {
-            BufferedWriter bWriter = new BufferedWriter(new FileWriter("plugins/QuizBlock/QuizBlock.save"));
+            p = new Properties();
             
-            //Write each Quiz to the save file
-            for(Quiz quiz: quizes) {
-                //Write data in the format "name;world;x;y;z;pitch;yaw;"
-                bWriter.write(quiz.name.concat(";"));
-                Location sendTo = quiz.sendTo;
-                bWriter.write(sendTo.getWorld().getName()+";");
-                bWriter.write(sendTo.getX()+";");
-                bWriter.write(sendTo.getY()+";");
-                bWriter.write(sendTo.getZ()+";");
-                bWriter.write(sendTo.getPitch()+";");
-                bWriter.write(sendTo.getYaw()+";");
-                
-                //Write doorBlocks data on a new line in the format "world;x;y;z;world;x;y;z;world;x;y;z;"
-                bWriter.newLine();
-                for (Block block : quiz.doorBlocks) {
-                    bWriter.write(block.getWorld().getName()+";");
-                    bWriter.write(block.getX()+";");
-                    bWriter.write(block.getY()+";");
-                    bWriter.write(block.getZ()+";");
-                }
-                
-                //Write rightBlocks data on a new line in the format "world;x;y;z;world;x;y;z;world;x;y;z;"
-                bWriter.newLine();
-                for (Block block : quiz.rightBlocks) {
-                    bWriter.write(block.getWorld().getName()+";");
-                    bWriter.write(block.getX()+";");
-                    bWriter.write(block.getY()+";");
-                    bWriter.write(block.getZ()+";");
-                }
-                
-                //Write wrongBlocks data on a new line in the format "world;x;y;z;world;x;y;z;world;x;y;z;"
-                bWriter.newLine();
-                for (Block block : quiz.wrongBlocks) {
-                    bWriter.write(block.getWorld().getName()+";");
-                    bWriter.write(block.getX()+";");
-                    bWriter.write(block.getY()+";");
-                    bWriter.write(block.getZ()+";");
-                }
-                
-                //Write right and wrong messages on new lines
-                bWriter.newLine();
-                bWriter.write(quiz.right);
-                bWriter.newLine();
-                bWriter.write(quiz.wrong);
-                
-                //Start a new line for the next Quiz
-                bWriter.newLine();
+            for (Quiz quiz: quizes) {
+                p.setProperty("Location", quiz.sendTo.getWorld().getName()+"'"+quiz.sendTo.getX()+"'"+
+                        quiz.sendTo.getY()+"'"+quiz.sendTo.getZ()+"'"+quiz.sendTo.getPitch()+"'"+quiz.sendTo.getYaw());
+                p.setProperty("DoorBlocks", quiz.blocksToString(BlockType.DOOR));
+                p.setProperty("RightBlocks", quiz.blocksToString(BlockType.RIGHT));
+                p.setProperty("WrongBlocks", quiz.blocksToString(BlockType.WRONG));
+                p.setProperty("RightMessage", quiz.rightMessage);
+                p.setProperty("WrongMessage", quiz.wrongMessage);
+                p.setProperty("RightCommand", quiz.rightCommand);
+                p.setProperty("WrongCommand", quiz.wrongCommand);
+
+                p.store(new FileOutputStream("plugins/QuizBlock/"+quiz.name+".dat"), null);
             }
-            
-            bWriter.close();
         }
         catch (Exception saveFailed) {
             System.err.println("[QuizBlock] Save Failed!");

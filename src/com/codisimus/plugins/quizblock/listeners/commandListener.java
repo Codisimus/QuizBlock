@@ -18,8 +18,8 @@ import org.bukkit.material.Door;
  * @author Codisimus
  */
 public class CommandListener implements CommandExecutor {
-    private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, LIST, RL }
-    private static enum BlockType { RIGHT, DOOR, WRONG }
+    private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, COMMAND, LIST, RL }
+    public static enum BlockType { RIGHT, DOOR, WRONG }
     private static final HashSet TRANSPARENT = Sets.newHashSet(
             (byte)0, (byte)8, (byte)9, (byte)10, (byte)11, (byte)51);
     
@@ -66,6 +66,8 @@ public class CommandListener implements CommandExecutor {
             return true;
         }
         
+        BlockType blockType;
+        
         //Execute the correct command
         switch (action) {
             case HELP:
@@ -82,8 +84,6 @@ public class CommandListener implements CommandExecutor {
                 
             case LINK:
                 if (args.length == 3) {
-                    BlockType blockType;
-        
                     try {
                         blockType = BlockType.valueOf(args[1].toUpperCase());
                     }
@@ -123,8 +123,6 @@ public class CommandListener implements CommandExecutor {
                 String msg = "";
                 for (int i = 2; i < args.length; i++)
                     msg = msg.concat(args[i].concat(" "));
-                
-                BlockType blockType;
         
                 try {
                     blockType = BlockType.valueOf(args[1].toUpperCase());
@@ -135,6 +133,32 @@ public class CommandListener implements CommandExecutor {
                 }
                     
                 msg(player, args[2], blockType, msg);
+                return true;
+                
+            case COMMAND:
+                if (args.length < 3) {
+                    sendHelp(player);
+                    return true;
+                }
+                
+                String cmd = "";
+                for (int i = 2; i < args.length; i++)
+                    cmd = cmd.concat(args[i].concat(" "));
+                
+                if (!cmd.startsWith("/")) {
+                    player.sendMessage("Command must start with '/'");
+                    return true;
+                }
+        
+                try {
+                    blockType = BlockType.valueOf(args[1].toUpperCase());
+                }
+                catch (Exception notEnum) {
+                    sendHelp(player);
+                    return true;
+                }
+                    
+                cmd(player, args[2], blockType, cmd);
                 return true;
                 
             case LIST:
@@ -265,7 +289,7 @@ public class CommandListener implements CommandExecutor {
      * @param name The name of the Quiz to be deleted
      */
     private static void delete(Player player, String name) {
-        Quiz quiz = null;
+        Quiz quiz;
         
         if (name == null) {
             //Find the Warp that will be modified using the target Block
@@ -318,13 +342,48 @@ public class CommandListener implements CommandExecutor {
         //Set the message for the given BlockType
         switch (type) {
             case RIGHT:
-                quiz.right = QuizBlock.format(msg);
-                player.sendMessage("'Right' message for "+quiz.name+" is now '"+quiz.right+"'");
+                quiz.rightMessage = QuizBlock.format(msg);
+                player.sendMessage("'Right' message for "+quiz.name+" is now '"+quiz.rightMessage+"'");
                 break;
                 
             case WRONG:
-                quiz.wrong = QuizBlock.format(msg);
-                player.sendMessage("'Wrong' message for "+quiz.name+" is now '"+quiz.wrong+"'");
+                quiz.wrongMessage = QuizBlock.format(msg);
+                player.sendMessage("'Wrong' message for "+quiz.name+" is now '"+quiz.wrongMessage+"'");
+                break;
+                
+            default: sendHelp(player); return;
+        }
+        
+        QuizBlock.save();
+    }
+    
+    /**
+     * Modifies the command of the specified Quiz
+     * If a name is not provided, the Quiz of the target Block is modified
+     * 
+     * @param player The Player modifying the Quiz
+     * @param name The name of the Quiz to be modified
+     * @param type The BlockType that the message will be linked to
+     * @param cmd The new Command
+     */
+    private static void cmd(Player player, String name, BlockType type, String cmd) {
+        //Cancel if the Quiz with the given name does not exist
+        Quiz quiz = QuizBlock.findQuiz(name);
+        if (quiz == null) {
+            player.sendMessage("Quiz "+name+" does not exsist.");
+            return;
+        }
+
+        //Set the Command for the given BlockType
+        switch (type) {
+            case RIGHT:
+                quiz.rightCommand = cmd;
+                player.sendMessage("'Right' message for "+quiz.name+" is now '"+quiz.rightCommand+"'");
+                break;
+                
+            case WRONG:
+                quiz.wrongCommand = cmd;
+                player.sendMessage("'Wrong' message for "+quiz.name+" is now '"+quiz.wrongCommand+"'");
                 break;
                 
             default: sendHelp(player); return;
@@ -362,7 +421,6 @@ public class CommandListener implements CommandExecutor {
         System.out.println("[QuizBlock] reloaded");
         if (player != null)
             player.sendMessage("QuizBlock reloaded");
-        return;
     }
     
     /**
