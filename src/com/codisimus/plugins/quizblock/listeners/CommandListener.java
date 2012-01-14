@@ -17,7 +17,7 @@ import org.bukkit.material.Door;
  * 
  * @author Codisimus
  */
-public class CmmandListener implements CommandExecutor {
+public class CommandListener implements CommandExecutor {
     private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, COMMAND, LIST, RL }
     public static enum BlockType { RIGHT, DOOR, WRONG }
     private static final HashSet TRANSPARENT = Sets.newHashSet(
@@ -378,12 +378,12 @@ public class CmmandListener implements CommandExecutor {
         switch (type) {
             case RIGHT:
                 quiz.rightCommand = cmd;
-                player.sendMessage("'Right' message for "+quiz.name+" is now '"+quiz.rightCommand+"'");
+                player.sendMessage("'Right' Command for "+quiz.name+" is now '"+quiz.rightCommand+"'");
                 break;
                 
             case WRONG:
                 quiz.wrongCommand = cmd;
-                player.sendMessage("'Wrong' message for "+quiz.name+" is now '"+quiz.wrongCommand+"'");
+                player.sendMessage("'Wrong' Command for "+quiz.name+" is now '"+quiz.wrongCommand+"'");
                 break;
                 
             default: sendHelp(player); return;
@@ -436,6 +436,9 @@ public class CmmandListener implements CommandExecutor {
         player.sendMessage("§2/quiz link wrong [Name]§b Links target Block with Quiz");
         player.sendMessage("§2/quiz msg right [Name] [msg]§b Sets right msg for Quiz");
         player.sendMessage("§2/quiz msg wrong [Name] [msg]§b Sets wrong msg for Quiz");
+        player.sendMessage("§2/quiz cmd right [Name] [cmd]§b Sets right command for Quiz");
+        player.sendMessage("§2/quiz cmd wrong [Name] [cmd]§b Sets wrong command for Quiz");
+        player.sendMessage("§b*Commands should not include '/'*");
         player.sendMessage("§2/quiz unlink§b Unlinks target Block from Quiz");
         player.sendMessage("§2/quiz delete (Name)§b Deletes Quiz and unlinks Block");
         player.sendMessage("§2/quiz list§b Lists all Quizes");

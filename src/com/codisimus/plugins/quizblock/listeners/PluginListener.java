@@ -10,7 +10,7 @@ import ru.tehkode.permissions.bukkit.PermissionsEx;
  * 
  * @author Codisimus
  */
-public class PuginListener extends ServerListener {
+public class PluginListener extends ServerListener {
     public static Boolean useBP;
 
     /**
