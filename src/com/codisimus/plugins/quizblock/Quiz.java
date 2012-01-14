@@ -1,6 +1,6 @@
 package com.codisimus.plugins.quizblock;
 
-import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
+import com.codisimus.plugins.quizblock.listeners.CmmandListener.BlockType;
 import java.util.LinkedList;
 import org.bukkit.Effect;
 import org.bukkit.Location;

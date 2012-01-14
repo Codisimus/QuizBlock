@@ -1,6 +1,6 @@
 package com.codisimus.plugins.quizblock;
 
-import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
+import com.codisimus.plugins.quizblock.listeners.CmmandListener.BlockType;
 import com.codisimus.plugins.quizblock.listeners.*;
 import java.io.*;
 import java.util.LinkedList;
@@ -52,7 +52,7 @@ public class QuizBlock extends JavaPlugin {
         loadSettings();
         loadData();
         registerEvents();
-        getCommand("quiz").setExecutor(new CommandListener());
+        getCommand("quiz").setExecutor(new CmmandListener());
         System.out.println("QuizBlock "+this.getDescription().getVersion()+" is enabled!");
     }
     
@@ -109,7 +109,7 @@ public class QuizBlock extends JavaPlugin {
             p.load(new FileInputStream("plugins/QuizBlock/config.properties"));
             
             timeOut = Integer.parseInt(loadValue("AutoCloseTimer")) * 1000;
-            PluginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
+            PuginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
             BlockEventListener.breakToUse = Boolean.parseBoolean(loadValue("BreakBlocksToActivate"));
             permission = format(loadValue("PermissionMessage"));
             rightMessage = format(loadValue("DefaultRightMessage"));
@@ -143,7 +143,7 @@ public class QuizBlock extends JavaPlugin {
      */
     private void registerEvents() {
         BlockEventListener blockListener = new BlockEventListener();
-        pm.registerEvent(Type.PLUGIN_ENABLE, new PluginListener(), Priority.Monitor, this);
+        pm.registerEvent(Type.PLUGIN_ENABLE, new PuginListener(), Priority.Monitor, this);
         pm.registerEvent(Type.WORLD_LOAD, new WorldLoadListener(), Priority.Monitor, this);
         pm.registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
         pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);

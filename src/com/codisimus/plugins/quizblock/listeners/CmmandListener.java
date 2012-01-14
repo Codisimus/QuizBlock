@@ -17,7 +17,7 @@ import org.bukkit.material.Door;
  * 
  * @author Codisimus
  */
-public class CommandListener implements CommandExecutor {
+public class CmmandListener implements CommandExecutor {
     private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, COMMAND, LIST, RL }
     public static enum BlockType { RIGHT, DOOR, WRONG }
     private static final HashSet TRANSPARENT = Sets.newHashSet(
