@@ -18,7 +18,7 @@ import org.bukkit.material.Door;
  * @author Codisimus
  */
 public class CommandListener implements CommandExecutor {
-    private static enum Action { HELP, MAKE, LINK, UNLINK, DELETE, MSG, COMMAND, LIST, RL }
+    private static enum Action { HELP, MAKE, MOVE, LINK, UNLINK, DELETE, MSG, CMD, LIST, RL }
     public static enum BlockType { RIGHT, DOOR, WRONG }
     private static final HashSet TRANSPARENT = Sets.newHashSet(
             (byte)0, (byte)8, (byte)9, (byte)10, (byte)11, (byte)51);
@@ -82,6 +82,14 @@ public class CommandListener implements CommandExecutor {
                 
                 return true;
                 
+            case MOVE:
+                if (args.length == 2)
+                    move(player, args[1]);
+                else
+                    sendHelp(player);
+                
+                return true;
+                
             case LINK:
                 if (args.length == 3) {
                     try {
@@ -121,7 +129,7 @@ public class CommandListener implements CommandExecutor {
                 }
                 
                 String msg = "";
-                for (int i = 2; i < args.length; i++)
+                for (int i = 3; i < args.length; i++)
                     msg = msg.concat(args[i].concat(" "));
         
                 try {
@@ -135,20 +143,20 @@ public class CommandListener implements CommandExecutor {
                 msg(player, args[2], blockType, msg);
                 return true;
                 
-            case COMMAND:
+            case CMD:
                 if (args.length < 3) {
                     sendHelp(player);
                     return true;
                 }
                 
                 String cmd = "";
-                for (int i = 2; i < args.length; i++)
-                    cmd = cmd.concat(args[i].concat(" "));
+                for (int i = 3; i < args.length; i++)
+                    cmd = cmd.concat(" "+args[i]);
                 
-                if (!cmd.startsWith("/")) {
-                    player.sendMessage("Command must start with '/'");
-                    return true;
-                }
+                cmd = cmd.substring(1);
+                
+                if (cmd.startsWith("/"))
+                    cmd.substring(1);
         
                 try {
                     blockType = BlockType.valueOf(args[1].toUpperCase());
@@ -194,9 +202,30 @@ public class CommandListener implements CommandExecutor {
             return;
         }
         
-        QuizBlock.quizes.add(new Quiz(name, player.getLocation()));
+        Quiz quiz = new Quiz(name, player.getLocation());
+        QuizBlock.quizes.put(name, quiz);
+        
         player.sendMessage("Quiz "+name+" made!");
-        QuizBlock.save();
+        quiz.save();
+    }
+    
+    /**
+     * Moves the specified Quiz to the given Player's Location
+     * 
+     * @param player The Player moving the Quiz
+     * @param name The name of the Quiz being moved
+     */
+    private static void move(Player player, String name) {
+        //Cancel if the Quiz with the given name does not exist
+        Quiz quiz = QuizBlock.findQuiz(name);
+        if (quiz == null) {
+            player.sendMessage("Quiz "+name+" does not exsist.");
+            return;
+        }
+        
+        quiz.sendTo = player.getLocation();
+        player.sendMessage("Quiz "+name+" moved to current location.");
+        quiz.save();
     }
     
     /**
@@ -256,7 +285,7 @@ public class CommandListener implements CommandExecutor {
             default: sendHelp(player); return;
         }
         
-        QuizBlock.save();
+        quiz.save();
     }
     
     /**
@@ -278,7 +307,7 @@ public class CommandListener implements CommandExecutor {
                 quiz.wrongBlocks.remove(block);
         
         player.sendMessage("Target "+block.getType().name()+" has been unlinked from Quiz "+quiz.name+"!");
-        QuizBlock.save();
+        quiz.save();
     }
     
     /**
@@ -316,10 +345,10 @@ public class CommandListener implements CommandExecutor {
         quiz.doorBlocks.clear();
         quiz.rightBlocks.clear();
         quiz.wrongBlocks.clear();
-        QuizBlock.quizes.remove(quiz);
+        QuizBlock.quizes.remove(quiz.name);
         
         player.sendMessage("Quiz "+quiz.name+" deleted.");
-        QuizBlock.save();
+        quiz.save();
     }
     
     /**
@@ -354,7 +383,7 @@ public class CommandListener implements CommandExecutor {
             default: sendHelp(player); return;
         }
         
-        QuizBlock.save();
+        quiz.save();
     }
     
     /**
@@ -389,7 +418,7 @@ public class CommandListener implements CommandExecutor {
             default: sendHelp(player); return;
         }
         
-        QuizBlock.save();
+        quiz.save();
     }
     
     /**
@@ -398,13 +427,7 @@ public class CommandListener implements CommandExecutor {
      * @param player The Player requesting the list
      */
     private static void list(Player player) {
-        String quizList = "Current Quizes:  ";
-        
-        //Concat the name of each Quiz
-        for (Quiz tempQuiz: QuizBlock.quizes)
-            quizList = quizList.concat(tempQuiz.name+", ");
-        
-        player.sendMessage(quizList.substring(0, quizList.length() - 2));
+        player.sendMessage("Current Quizes: "+QuizBlock.quizes.keySet().toString());
     }
     
     /**
@@ -414,7 +437,6 @@ public class CommandListener implements CommandExecutor {
      */
     private static void rl(Player player) {
         QuizBlock.quizes.clear();
-        QuizBlock.save = true;
         QuizBlock.loadData();
         QuizBlock.pm = QuizBlock.server.getPluginManager();
         
@@ -431,14 +453,14 @@ public class CommandListener implements CommandExecutor {
     private static void sendHelp(Player player) {
         player.sendMessage("§e     QuizBlock Help Page:");
         player.sendMessage("§2/quiz make [Name]§b Makes Quiz at target location");
+        player.sendMessage("§2/quiz move [Name]§b Moves Quiz to target location");
         player.sendMessage("§2/quiz link right [Name]§b Links target Block with Quiz");
         player.sendMessage("§2/quiz link door [Name]§b Links target Block with Quiz");
         player.sendMessage("§2/quiz link wrong [Name]§b Links target Block with Quiz");
         player.sendMessage("§2/quiz msg right [Name] [msg]§b Sets right msg for Quiz");
         player.sendMessage("§2/quiz msg wrong [Name] [msg]§b Sets wrong msg for Quiz");
-        player.sendMessage("§2/quiz command right [Name] [Command]§b Sets right Command for Quiz");
-        player.sendMessage("§2/quiz command wrong [Name] [Command]§b Sets wrong Command for Quiz");
-        player.sendMessage("§b*Commands should not include '/'*");
+        player.sendMessage("§2/quiz cmd right [Name] [Command]§b Sets right Cmd for Quiz");
+        player.sendMessage("§2/quiz cmd wrong [Name] [Command]§b Sets wrong Cmd for Quiz");
         player.sendMessage("§2/quiz unlink§b Unlinks target Block from Quiz");
         player.sendMessage("§2/quiz delete (Name)§b Deletes Quiz and unlinks Block");
         player.sendMessage("§2/quiz list§b Lists all Quizes");

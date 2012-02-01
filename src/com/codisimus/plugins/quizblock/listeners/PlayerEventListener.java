@@ -112,12 +112,13 @@ public class PlayerEventListener extends PlayerListener {
             }
         };
         
-        for (Quiz quiz: QuizBlock.quizes)
+        for (Quiz quiz: QuizBlock.quizes.values())
             if (!quiz.open)
                 if (quiz.rightBlocks.contains(block)) {
                     //Open if the Player has permission to use Quizes
                     if (QuizBlock.hasPermission(player, "use")) {
-                        player.sendMessage(quiz.rightMessage);
+                        if (!quiz.rightMessage.isEmpty())
+                            player.sendMessage(quiz.rightMessage);
 
                         if (!quiz.rightCommand.isEmpty())
                             QuizBlock.server.dispatchCommand(cs, quiz.rightCommand.replace("<player>", player.getName()));
@@ -128,9 +129,10 @@ public class PlayerEventListener extends PlayerListener {
                 else if (quiz.wrongBlocks.contains(block)) {
                     //Teleport if the Player has permission to use Quizes
                     if (QuizBlock.hasPermission(player, "use")) {
-                        player.sendMessage(quiz.wrongMessage);
+                        if (!quiz.wrongMessage.isEmpty())
+                            player.sendMessage(quiz.wrongMessage);
 
-                        if (!quiz.rightCommand.isEmpty())
+                        if (!quiz.wrongCommand.isEmpty())
                             QuizBlock.server.dispatchCommand(cs, quiz.wrongCommand.replace("<player>", player.getName()));
 
                         player.teleport(quiz.sendTo);

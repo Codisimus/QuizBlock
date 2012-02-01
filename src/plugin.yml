@@ -1,6 +1,6 @@
 name: QuizBlock
 main: com.codisimus.plugins.quizblock.QuizBlock
-version: 0.9.0
+version: 1.0.0
 author: Codisimus
 website: www.codisimus.com
 description: Door opens when correct block is broken
@@ -16,6 +16,9 @@ permissions:
   quizblock.make:
     default: op
     description: Needed to make a Quiz (/quiz make)
+  quizblock.move:
+    default: op
+    description: Needed to move a Quiz (/quiz move)
   quizblock.link:
     default: op
     description: Needed to link a Block to a Quiz (/quiz link)

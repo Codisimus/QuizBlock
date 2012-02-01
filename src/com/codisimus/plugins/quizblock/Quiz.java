@@ -1,7 +1,10 @@
 package com.codisimus.plugins.quizblock;
 
 import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.LinkedList;
+import java.util.Properties;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -24,10 +27,10 @@ public class Quiz {
     public LinkedList<Block> doorBlocks = new LinkedList<Block>();
     public LinkedList<Block> rightBlocks = new LinkedList<Block>();
     public LinkedList<Block> wrongBlocks = new LinkedList<Block>();
-    public String rightMessage = QuizBlock.rightMessage;
-    public String wrongMessage = QuizBlock.wrongMessage;
-    public String rightCommand = QuizBlock.rightCommand;
-    public String wrongCommand = QuizBlock.wrongCommand;
+    public String rightMessage = QuizBlock.defaultRightMsg;
+    public String wrongMessage = QuizBlock.defaultWrongMsg;
+    public String rightCommand = QuizBlock.defaultRightCmd;
+    public String wrongCommand = QuizBlock.defaultWrongCmd;
     public boolean open = false;
 
     /**
@@ -48,6 +51,9 @@ public class Quiz {
      * If the block is a door then it is swung open
      */
     public void open() {
+        if (doorBlocks.isEmpty())
+            return;
+        
         open = true;
         
         for (final Block block: doorBlocks) {
@@ -55,6 +61,8 @@ public class Quiz {
             Thread thread = new Thread() {
                 @Override
                 public void run() {
+                    BlockState state = block.getState();
+                            
                     //Check for door material
                     switch (block.getType()) {
                         case WOOD_DOOR: //Fall through
@@ -62,7 +70,6 @@ public class Quiz {
                         case IRON_DOOR: //Fall through
                         case IRON_DOOR_BLOCK:
                             //Convert the Block to a Door
-                            BlockState state = block.getState();
                             Door door = (Door)state.getData();
 
                             //Get the other half of the Door
@@ -97,9 +104,6 @@ public class Quiz {
                             break;
 
                         default:
-                            int type = block.getTypeId();
-                            byte data = block.getData();
-
                             //Change material to AIR
                             block.setTypeId(0);
 
@@ -109,16 +113,16 @@ public class Quiz {
                                 //Play smoke effect
                                 block.getWorld().playEffect(block.getLocation(), Effect.SMOKE, 4);
                             
-                                //Sleep for 1 second
+                                //Sleep for 0.1 second
                                 try {
-                                    Thread.currentThread().sleep(1000);
+                                    Thread.currentThread().sleep(100);
                                 }
                                 catch (Exception e) {
                                 }
                             }
 
                             //Change material back
-                            block.setTypeIdAndData(type, data, true);
+                            state.update(true);
                     
                             break;
                     }
@@ -181,5 +185,35 @@ public class Quiz {
         }
         
         return string;
+    }
+    
+    /**
+     * Writes data to save file
+     * Old file is overwritten
+     */
+    public void save() {
+        try {
+            File file = new File("plugins/QuizBlock/"+name+".dat");
+            if (!file.exists())
+                file.createNewFile();
+            
+            Properties p = new Properties();
+            
+            p.setProperty("Location", sendTo.getWorld().getName()+"'"+sendTo.getX()+"'"+
+                    sendTo.getY()+"'"+sendTo.getZ()+"'"+sendTo.getPitch()+"'"+sendTo.getYaw());
+            p.setProperty("DoorBlocks", blocksToString(BlockType.DOOR));
+            p.setProperty("RightBlocks", blocksToString(BlockType.RIGHT));
+            p.setProperty("WrongBlocks", blocksToString(BlockType.WRONG));
+            p.setProperty("RightMessage", rightMessage);
+            p.setProperty("WrongMessage", wrongMessage);
+            p.setProperty("RightCommand", rightCommand);
+            p.setProperty("WrongCommand", wrongCommand);
+
+            p.store(new FileOutputStream(file), null);
+        }
+        catch (Exception saveFailed) {
+            System.err.println("[QuizBlock] Saving of Quiz "+name+" Failed!");
+            saveFailed.printStackTrace();
+        }
     }
 }

@@ -1,8 +1,8 @@
 package com.codisimus.plugins.quizblock.listeners;
 
 import com.codisimus.plugins.quizblock.QuizBlock;
-import org.bukkit.event.server.ServerListener;
 import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.event.server.ServerListener;
 import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 /**

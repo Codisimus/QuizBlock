@@ -37,7 +37,7 @@ public class BlockEventListener extends BlockListener {
             default: return;
         }
         
-        for (Quiz quiz: QuizBlock.quizes) {
+        for (Quiz quiz: QuizBlock.quizes.values()) {
             LinkedList<Block> doorBlocks = quiz.doorBlocks;
             for (Block doorBlock: doorBlocks)
                 if (doorBlock.getType().equals(material))
@@ -63,7 +63,7 @@ public class BlockEventListener extends BlockListener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
         
-        for (Quiz quiz: QuizBlock.quizes)
+        for (Quiz quiz: QuizBlock.quizes.values())
             if (quiz.rightBlocks.contains(block)) {
                 event.setCancelled(true);
                 
