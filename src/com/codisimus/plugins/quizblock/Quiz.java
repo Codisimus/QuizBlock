@@ -1,10 +1,7 @@
 package com.codisimus.plugins.quizblock;
 
-import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
-import java.io.File;
-import java.io.FileOutputStream;
+import com.codisimus.plugins.quizblock.QuizBlockCommand.BlockType;
 import java.util.LinkedList;
-import java.util.Properties;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -192,28 +189,6 @@ public class Quiz {
      * Old file is overwritten
      */
     public void save() {
-        try {
-            File file = new File("plugins/QuizBlock/"+name+".dat");
-            if (!file.exists())
-                file.createNewFile();
-            
-            Properties p = new Properties();
-            
-            p.setProperty("Location", sendTo.getWorld().getName()+"'"+sendTo.getX()+"'"+
-                    sendTo.getY()+"'"+sendTo.getZ()+"'"+sendTo.getPitch()+"'"+sendTo.getYaw());
-            p.setProperty("DoorBlocks", blocksToString(BlockType.DOOR));
-            p.setProperty("RightBlocks", blocksToString(BlockType.RIGHT));
-            p.setProperty("WrongBlocks", blocksToString(BlockType.WRONG));
-            p.setProperty("RightMessage", rightMessage);
-            p.setProperty("WrongMessage", wrongMessage);
-            p.setProperty("RightCommand", rightCommand);
-            p.setProperty("WrongCommand", wrongCommand);
-
-            p.store(new FileOutputStream(file), null);
-        }
-        catch (Exception saveFailed) {
-            System.err.println("[QuizBlock] Saving of Quiz "+name+" Failed!");
-            saveFailed.printStackTrace();
-        }
+        QuizBlock.save(this);
     }
 }

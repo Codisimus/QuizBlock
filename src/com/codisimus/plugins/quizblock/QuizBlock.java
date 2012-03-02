@@ -1,22 +1,15 @@
 package com.codisimus.plugins.quizblock;
 
-import com.codisimus.plugins.quizblock.listeners.BlockEventListener;
-import com.codisimus.plugins.quizblock.listeners.CommandListener;
-import com.codisimus.plugins.quizblock.listeners.CommandListener.BlockType;
-import com.codisimus.plugins.quizblock.listeners.PlayerEventListener;
-import com.codisimus.plugins.quizblock.listeners.PluginListener;
+import com.codisimus.plugins.quizblock.QuizBlockCommand.BlockType;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event.Type;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.tehkode.permissions.PermissionManager;
@@ -38,6 +31,8 @@ public class QuizBlock extends JavaPlugin {
     public static String defaultWrongCmd;
     private static Properties p;
     public static HashMap<String, Quiz> quizes = new HashMap<String, Quiz>();
+    private static String dataFolder;
+    static Plugin plugin;
 
     @Override
     public void onDisable () {
@@ -51,51 +46,31 @@ public class QuizBlock extends JavaPlugin {
     public void onEnable () {
         server = getServer();
         pm = getServer().getPluginManager();
+        plugin = this;
+        
+        File dir = this.getDataFolder();
+        if (!dir.isDirectory())
+            dir.mkdir();
+        
+        dataFolder = dir.getPath();
+        
+        dir = new File(dataFolder+"/Warps");
+        if (!dir.isDirectory())
+            dir.mkdir();
+        
         loadSettings();
         loadData();
-        registerEvents();
-        getCommand("quiz").setExecutor(new CommandListener());
+        
+        //Register Events
+        pm.registerEvents(new QuizBlockListener(), this);
+        if (!QuizBlockListener.breakToUse)
+            pm.registerEvents(new QuizBlockClickListener(), this);
+        
+        //Register the command found in the plugin.yml
+        QuizBlockCommand.command = (String)this.getDescription().getCommands().keySet().toArray()[0];
+        getCommand(QuizBlockCommand.command).setExecutor(new QuizBlockCommand());
+        
         System.out.println("QuizBlock "+this.getDescription().getVersion()+" is enabled!");
-    }
-    
-    /**
-     * Moves file from QuizBlock.jar to appropriate folder
-     * Destination folder is created if it doesn't exist
-     * 
-     * @param fileName The name of the file to be moved
-     */
-    private void moveFile(String fileName) {
-        try {
-            //Retrieve file from this plugin's .jar
-            JarFile jar = new JarFile("plugins/QuizBlock.jar");
-            ZipEntry entry = jar.getEntry(fileName);
-            
-            //Create the destination folder if it does not exist
-            String destination = "plugins/QuizBlock/";
-            File file = new File(destination.substring(0, destination.length()-1));
-            if (!file.exists())
-                file.mkdir();
-            
-            //Copy the file
-            File efile = new File(destination, fileName);
-            InputStream in = new BufferedInputStream(jar.getInputStream(entry));
-            OutputStream out = new BufferedOutputStream(new FileOutputStream(efile));
-            byte[] buffer = new byte[2048];
-            while (true) {
-                int nBytes = in.read(buffer);
-                if (nBytes <= 0)
-                    break;
-                out.write(buffer, 0, nBytes);
-            }
-            
-            out.flush();
-            out.close();
-            in.close();
-        }
-        catch (Exception moveFailed) {
-            System.err.println("[QuizBlock] File Move Failed!");
-            moveFailed.printStackTrace();
-        }
     }
     
     /**
@@ -103,16 +78,20 @@ public class QuizBlock extends JavaPlugin {
      * 
      */
     public void loadSettings() {
-        if (!new File("plugins/QuizBlock/config.properties").exists())
-            moveFile("config.properties");
-        
-        p = new Properties();
         try {
-            p.load(new FileInputStream("plugins/QuizBlock/config.properties"));
+            //Copy the file from the jar if it is missing
+            File file = new File(dataFolder+"/config.properties");
+            if (!file.exists())
+                this.saveResource("config.properties", true);
+            
+            //Load config file
+            p = new Properties();
+            FileInputStream fis = new FileInputStream(file);
+            p.load(fis);
             
             timeOut = Integer.parseInt(loadValue("AutoCloseTimer")) * 1000;
-            PluginListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
-            BlockEventListener.breakToUse = Boolean.parseBoolean(loadValue("BreakBlocksToActivate"));
+            QuizBlockListener.useBP = Boolean.parseBoolean(loadValue("UseBukkitPermissions"));
+            QuizBlockListener.breakToUse = Boolean.parseBoolean(loadValue("BreakBlocksToActivate"));
             permission = format(loadValue("PermissionMessage"));
             defaultRightMsg = format(loadValue("DefaultRightMessage"));
             defaultWrongMsg = format(loadValue("DefaultWrongMessage"));
@@ -137,20 +116,6 @@ public class QuizBlock extends JavaPlugin {
         }
         
         return p.getProperty(key);
-    }
-    
-    /**
-     * Registers events for the QuizBlock Plugin
-     *
-     */
-    private void registerEvents() {
-        BlockEventListener blockListener = new BlockEventListener();
-        pm.registerEvent(Type.PLUGIN_ENABLE, new PluginListener(), Priority.Monitor, this);
-        pm.registerEvent(Type.REDSTONE_CHANGE, blockListener, Priority.Normal, this);
-        pm.registerEvent(Type.BLOCK_BREAK, blockListener, Priority.Normal, this);
-        
-        if (!BlockEventListener.breakToUse)
-            pm.registerEvent(Type.PLAYER_INTERACT, new PlayerEventListener(), Priority.Monitor, this);
     }
 
     /**
@@ -186,11 +151,23 @@ public class QuizBlock extends JavaPlugin {
      *
      */
     public static void loadData() {
-        File[] files = new File("plugins/QuizBlock").listFiles();
+        File[] files = plugin.getDataFolder().listFiles();
+
+        //Organize files
+        if (files != null)
+            for (File file: files) {
+                String name = file.getName();
+                if (name.endsWith(".dat")) {
+                    File dest = new File(dataFolder+"/Quizes/"+name.substring(0, name.length() - 4)+".properties");
+                    file.renameTo(dest);
+                }
+            }
+        
+        files = new File(dataFolder+"/Quizes/").listFiles();
 
         for (File file: files) {
             String name = file.getName();
-            if (name.endsWith(".dat")) {
+            if (name.endsWith(".properties")) {
                 String quizName = name.substring(0, name.length() - 4);
                 try {
                     p.load(new FileInputStream(file));
@@ -229,14 +206,14 @@ public class QuizBlock extends JavaPlugin {
         if (!quizes.isEmpty())
             return;
 
-        File file = new File("plugins/QuizBlock/QuizBlock.save");
+        File file = new File(dataFolder+"/QuizBlock.save");
         if (!file.exists())
             return;
 
         System.out.println("[QuizBlock] Loading outdated save file");
 
         try {
-            BufferedReader bReader = new BufferedReader(new FileReader("plugins/QuizBlock/QuizBlock.save"));
+            BufferedReader bReader = new BufferedReader(new FileReader(file));
             String line;
             while ((line = bReader.readLine()) != null) {
                 String[] split = line.split(";");
@@ -320,6 +297,36 @@ public class QuizBlock extends JavaPlugin {
     public static void saveAll() {
         for (Quiz quiz: quizes.values())
             quiz.save();
+    }
+    
+    /**
+     * Writes data to save file
+     * Old file is overwritten
+     */
+    static void save(Quiz quiz) {
+        try {
+            File file = new File(dataFolder+"/"+quiz.name+".properties");
+            if (!file.exists())
+                file.createNewFile();
+            
+            Properties p = new Properties();
+            
+            p.setProperty("Location", quiz.sendTo.getWorld().getName()+"'"+quiz.sendTo.getX()+"'"+
+                    quiz.sendTo.getY()+"'"+quiz.sendTo.getZ()+"'"+quiz.sendTo.getPitch()+"'"+quiz.sendTo.getYaw());
+            p.setProperty("DoorBlocks", quiz.blocksToString(BlockType.DOOR));
+            p.setProperty("RightBlocks", quiz.blocksToString(BlockType.RIGHT));
+            p.setProperty("WrongBlocks", quiz.blocksToString(BlockType.WRONG));
+            p.setProperty("RightMessage", quiz.rightMessage);
+            p.setProperty("WrongMessage", quiz.wrongMessage);
+            p.setProperty("RightCommand", quiz.rightCommand);
+            p.setProperty("WrongCommand", quiz.wrongCommand);
+
+            p.store(new FileOutputStream(file), null);
+        }
+        catch (Exception saveFailed) {
+            System.err.println("[QuizBlock] Saving of Quiz "+quiz.name+" Failed!");
+            saveFailed.printStackTrace();
+        }
     }
     
     /**
