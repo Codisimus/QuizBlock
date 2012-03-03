@@ -54,7 +54,7 @@ public class QuizBlock extends JavaPlugin {
         
         dataFolder = dir.getPath();
         
-        dir = new File(dataFolder+"/Warps");
+        dir = new File(dataFolder+"/Quizes");
         if (!dir.isDirectory())
             dir.mkdir();
         

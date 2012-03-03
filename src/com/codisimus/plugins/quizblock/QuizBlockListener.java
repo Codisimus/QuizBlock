@@ -63,6 +63,9 @@ public class QuizBlockListener implements Listener {
      */
     @EventHandler
     public void onBlockBreak (BlockBreakEvent event) {
+        if (event.isCancelled())
+            return;
+        
         Block block = event.getBlock();
         Player player = event.getPlayer();
         

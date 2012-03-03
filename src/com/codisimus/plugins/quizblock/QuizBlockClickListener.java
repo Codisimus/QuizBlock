@@ -17,6 +17,9 @@ public class QuizBlockClickListener implements Listener {
 
     @EventHandler (priority = EventPriority.MONITOR)
     public void onPlayerInteract (PlayerInteractEvent event) {
+        if (event.isCancelled())
+            return;
+        
         //Return if the Event was arm flailing
         Block block = event.getClickedBlock();
         if (block == null)
